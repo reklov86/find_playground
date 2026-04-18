@@ -318,10 +318,10 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
                     <button
                       key={mode}
                       onClick={() => handleFetchRoute(mode)}
-                      className={`flex-1 flex items-center justify-center py-2 rounded-xl transition-all ${
-                        activeMode === mode && route
-                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
-                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      className={`flex-1 flex items-center justify-center py-2.5 rounded-xl transition-all ${
+                        activeMode === mode
+                          ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' 
+                          : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
