@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎡 Spielplatz Entdecker (Playground Finder)
 
-## Getting Started
+[![Deploy to GitHub Pages](https://github.com/reklov86/find_playground/actions/workflows/deploy.yml/badge.svg)](https://github.com/reklov86/find_playground/actions/workflows/deploy.yml)
 
-First, run the development server:
+A high-performance, mobile-first web application designed to help families in Germany find and navigate to the best playgrounds. Built with modern web technologies for a smooth, premium experience.
 
+## ✨ Features
+
+- 🗺️ **Interactive 3D Maps**: Explore playgrounds with 3D building extrusions and a dynamic 45-degree tilted view.
+- 📍 **Real-time Discovery**: Automatic GPS location and high-accuracy manual search (Nominatim API).
+- 🚶 **Multimodal Routing**: Integrated walking, cycling, and driving directions via OpenRouteService.
+- 🚌 **Public Transport**: Deep-links to Google Maps for accurate German transit data.
+- 📸 **Community Driven**: Authenticated users can upload and view photos of playgrounds via Supabase.
+- 🎨 **Premium UI**: Vibrant colors, glassmorphism, and smooth Framer Motion animations.
+
+## 🚀 Tech Stack
+
+- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Mapping**: [MapLibre GL JS](https://maplibre.org/) & [React Map GL](https://visgl.github.io/react-map-gl/)
+- **Backend/Auth**: [Supabase](https://supabase.com/)
+- **APIs**: Overpass (Playground Data), OpenRouteService (Routing), Nominatim (Geocoding)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [Framer Motion](https://www.framer.com/motion/)
+
+## 🛠️ Local Setup
+
+### 1. Prerequisites
+- **Node.js 18+** installed on your system.
+- Git.
+
+### 2. Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/reklov86/find_playground.git
+cd find_playground
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Environment Variables
+Create a `.env.local` file based on `.env.example`:
+```bash
+cp .env.example .env.local
+```
+Then fill in your:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_ORS_API_KEY`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Run Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000/find_playground](http://localhost:3000/find_playground) to see the app.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🌍 Deployment
 
-## Learn More
+The project is configured for **GitHub Pages** using a static export strategy.
 
-To learn more about Next.js, take a look at the following resources:
+1. Push your changes to the `main` branch.
+2. The GitHub Action will automatically build and deploy to:
+   `https://reklov86.github.io/find_playground/`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📄 Documentation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Detailed Requirements](docs/REQUIREMENTS.md)
+- [Architecture Overview](docs/ARCHITECTURE.md)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+© 2026 reklov86. Built for adventures.
