@@ -19,6 +19,7 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [bbox, setBbox] = useState<[number, number, number, number] | null>(null);
   const [zoom, setZoom] = useState(6);
+  const [mapCenter, setMapCenter] = useState({ lon: 10.4515, lat: 51.1657 });
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
   
   const mapRef = useRef<MapViewHandle>(null);
@@ -44,6 +45,7 @@ export default function Home() {
           const lat = position.coords.latitude;
           const lon = position.coords.longitude;
           setUserLocation({ lat, lon });
+          setMapCenter({ lat, lon }); // Also initialize map center
           
           // Automatically focus map on actual location with ~400m zoom (15.5)
           // Use a small delay to ensure MapView is initialized
@@ -283,8 +285,18 @@ export default function Home() {
               <MapView 
                 ref={mapRef} 
                 playgrounds={playgrounds}
+                initialViewState={{
+                  longitude: mapCenter.lon,
+                  latitude: mapCenter.lat,
+                  zoom: zoom,
+                  pitch: 45,
+                  bearing: 0
+                }}
                 onBboxChange={setBbox}
-                onViewStateChange={(vs) => setZoom(vs.zoom)}
+                onViewStateChange={(vs) => {
+                  setZoom(vs.zoom);
+                  setMapCenter({ lon: vs.longitude, lat: vs.latitude });
+                }}
               />
             ) : (
               <ListView 
