@@ -50,10 +50,10 @@ export async function getRoute(
   start: [number, number],
   end: [number, number],
   profile: RoutingProfile = 'foot-walking'
-): Promise<RouteData | null> {
+): Promise<{ data: RouteData | null, error?: string }> {
   if (!API_KEY) {
-    console.error('OpenRouteService API key is missing. Check NEXT_PUBLIC_ORS_API_KEY environment variable.');
-    return null;
+    console.error('OpenRouteService API key is missing.');
+    return { data: null, error: 'API_KEY_MISSING' };
   }
 
   const queryParams = new URLSearchParams({ api_key: API_KEY });
@@ -64,8 +64,7 @@ export async function getRoute(
       coordinates: [start, end],
       instructions: true,
       language: 'de',
-      units: 'm',
-      preference: 'recommended'
+      units: 'm'
     };
 
     console.log(`Fetching route from ORS: ${profile}`, { start, end });
@@ -73,44 +72,31 @@ export async function getRoute(
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': API_KEY, // Try both header and query param for maximum compatibility
+        'Content-Type': 'application/json'
+        // Removed Authorization header to prefer api_key query param
       },
       body: JSON.stringify(body),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch (e) {
-        errorData = errorText;
-      }
-      console.error('ORS Routing Error Details:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorData,
-        url: url.replace(API_KEY, 'REDACTED')
-      });
-      return null;
+      console.error(`ORS Routing Error (${response.status}):`, errorText);
+      return { data: null, error: `API_ERROR_${response.status}` };
     }
 
     const data = await response.json();
     
-    // Robust verification
     if (data && data.type === 'FeatureCollection' && data.features?.length > 0) {
       const feature = data.features[0];
-      if (feature.geometry?.coordinates?.length > 0 && feature.properties?.segments?.[0]?.steps) {
-        console.log('Successfully fetched route with instructions');
-        return data as RouteData;
+      if (feature.geometry?.coordinates?.length > 0) {
+        return { data: data as RouteData };
       }
     }
     
-    console.error('ORS response missing expected data (geometry or steps):', data);
-    return null;
-  } catch (error) {
-    console.error('Failed to fetch route (network or parsing error):', error);
-    return null;
+    console.error('ORS response missing geometry:', data);
+    return { data: null, error: 'INVALID_RESPONSE' };
+  } catch (error: any) {
+    console.error('Failed to fetch route:', error);
+    return { data: null, error: 'NETWORK_ERROR' };
   }
 }

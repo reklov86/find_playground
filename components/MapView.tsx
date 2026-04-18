@@ -163,7 +163,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
         const start: [number, number] = [position.coords.longitude, position.coords.latitude];
         const end: [number, number] = playground.geometry.coordinates;
         
-        const routeData = await getRoute(start, end, profile);
+        const { data: routeData, error } = await getRoute(start, end, profile);
         if (routeData) {
           setRoute(routeData);
           setShowInstructions(true);
@@ -185,7 +185,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
           }
           setRoutingError(null);
         } else {
-          setRoutingError('Route konnte nicht berechnet werden.');
+          setRoutingError(error === 'API_ERROR_401' ? 'API Key Fehler (401)' : `Route konnte nicht berechnet werden (${error || '?'})`);
         }
         setIsRouting(false);
       },
