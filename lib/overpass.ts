@@ -33,12 +33,14 @@ export interface GeoJSONFeatureCollection {
 }
 
 const OVERPASS_ENDPOINTS = [
-  'https://overpass.kumi.systems/api/interpreter',
   'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.openstreetmap.fr/api/interpreter',
   'https://overpass.n.ro.lt/api/interpreter',
   'https://overpass.osm.ch/api/interpreter',
-  'https://main.overpass-api.de/api/interpreter'
+  'https://main.overpass-api.de/api/interpreter',
+  'https://z.overpass-api.de/api/interpreter',
+  'https://overpass.be/api/interpreter'
 ];
 
 const QUERY_TIMEOUT = 90; // Seconds
@@ -48,20 +50,37 @@ const QUERY_TIMEOUT = 90; // Seconds
  */
 async function executeOverpassQuery(query: string): Promise<GeoJSONFeatureCollection> {
   let lastError: Error | null = null;
+  let attempt = 0;
 
   for (const endpoint of OVERPASS_ENDPOINTS) {
+    attempt++;
     try {
+      console.log(`Overpass Attempt ${attempt}: Querying ${endpoint}...`);
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         body: query,
-        signal: AbortSignal.timeout(30000) 
+        // Short timeout per endpoint to fail-fast and try the next one
+        signal: AbortSignal.timeout(15000) 
       });
 
-      if (response.status === 429) continue;
-      if (!response.ok) throw new Error(`Overpass API error: ${response.statusText}`);
+      if (response.status === 429) {
+        console.warn(`Overpass endpoint ${endpoint} rate limited (429).`);
+        continue;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`Overpass API error: ${response.status} ${response.statusText}`);
+      }
 
       const data = await response.json();
       const elements: OSMElement[] = data.elements || [];
+
+      if (elements.length === 0) {
+        console.log(`Overpass endpoint ${endpoint} returned 0 elements.`);
+      } else {
+        console.log(`Overpass Success: Found ${elements.length} elements from ${endpoint}`);
+      }
 
       const features: GeoJSONFeature[] = elements
         .filter(el => (el.type === 'node' && el.lat && el.lon) || (el.center))
@@ -87,14 +106,15 @@ async function executeOverpassQuery(query: string): Promise<GeoJSONFeatureCollec
         });
 
       return { type: 'FeatureCollection', features };
-    } catch (error) {
-      console.error(`Error with Overpass endpoint ${endpoint}:`, error);
+    } catch (error: any) {
+      const errorMsg = error?.name === 'TimeoutError' ? 'Timeout' : error?.message || 'Unknown error';
+      console.error(`Error with Overpass endpoint ${endpoint}: ${errorMsg}`);
       lastError = error as Error;
       continue;
     }
   }
 
-  console.error('All Overpass endpoints failed:', lastError);
+  console.error('All Overpass endpoints failed or were exhausted:', lastError);
   return { type: 'FeatureCollection', features: [] };
 }
 

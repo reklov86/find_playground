@@ -4,7 +4,7 @@ import React, { useRef, useImperativeHandle, forwardRef, useState, useEffect } f
 import Map, { NavigationControl, ScaleControl, GeolocateControl, MapRef, Source, Layer, Popup, MapLayerMouseEvent, Marker } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { usePlaygrounds } from '@/hooks/usePlaygrounds';
-import { Navigation, Info, Bike, Car, Footprints, X, Clock, MapPin, ChevronRight, List, Map as MapIcon } from 'lucide-react';
+import { Navigation, Info, Bike, Car, Footprints, X, Clock, MapPin, ChevronRight, List, Map as MapIcon, Loader2 } from 'lucide-react';
 import { getRoute, RoutingProfile, RouteData } from '@/lib/routing';
 import { GeoJSONFeature } from '@/lib/overpass';
 
@@ -52,8 +52,14 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
   const [routingError, setRoutingError] = useState<string | null>(null);
 
   // If no external data is provided, use own query (fallback)
-  const { data: internalPlaygrounds } = usePlaygrounds(bbox, viewState.zoom);
-  const playgrounds = externalPlaygrounds || internalPlaygrounds?.features || [];
+  const { data: internalPlaygrounds, isLoading: isLocalLoading } = usePlaygrounds(bbox, viewState.zoom);
+  
+  // Logic: Always prefer non-empty external data. If external is empty/loading, fallback to internal.
+  const playgrounds = (externalPlaygrounds && externalPlaygrounds.length > 0) 
+    ? externalPlaygrounds 
+    : (internalPlaygrounds?.features || []);
+    
+  const isLoading = isLocalLoading && playgrounds.length === 0;
 
   useImperativeHandle(ref, () => ({
     flyTo: (longitude: number, latitude: number, zoom: number = 14) => {
@@ -469,6 +475,14 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 px-6 py-3 rounded-full bg-slate-900 text-white text-sm font-bold shadow-2xl flex items-center gap-3 border border-slate-700 backdrop-blur-md opacity-90">
           <Info className="w-5 h-5 text-yellow-400" />
           Zoome näher heran, um Spielplätze zu entdecken
+        </div>
+      )}
+
+      {/* Playground Loading Indicator */}
+      {isLoading && (
+        <div className="absolute top-20 right-20 z-[100] px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-md shadow-xl border border-slate-100 flex items-center gap-2 animate-pulse">
+          <Loader2 className="w-4 h-4 text-yellow-500 animate-spin" />
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Suche Spielplätze...</span>
         </div>
       )}
 

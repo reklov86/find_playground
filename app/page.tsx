@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import MapView, { MapViewHandle } from "@/components/MapView";
 import AuthModal from "@/components/AuthModal";
-import { Search, MapPin, Navigation, Camera, LogIn, LogOut, User as UserIcon, Loader2 } from "lucide-react";
+import { Search, MapPin, Navigation, Camera, LogIn, LogOut, User as UserIcon, Loader2, Info } from "lucide-react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
@@ -24,7 +24,7 @@ export default function Home() {
   
   const mapRef = useRef<MapViewHandle>(null);
 
-  const { data: playgroundsData } = usePlaygrounds(bbox, zoom);
+  const { data: playgroundsData, isError, isLoading: isPlaygroundsLoading } = usePlaygrounds(bbox, zoom);
   const playgrounds = playgroundsData?.features || [];
 
   useEffect(() => {
@@ -249,7 +249,21 @@ export default function Home() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h2 className="text-3xl font-extrabold text-slate-900 mb-1">Entdecke in deiner Nähe</h2>
-              <p className="text-slate-500 font-bold tracking-wide uppercase">Interaktive 3D Karte & Liste</p>
+              <div className="flex items-center gap-4">
+                <p className="text-slate-500 font-bold tracking-wide uppercase">Interaktive 3D Karte & Liste</p>
+                {isPlaygroundsLoading && (
+                  <div className="flex items-center gap-2 text-yellow-500 animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-[10px] font-black uppercase">Lade Daten...</span>
+                  </div>
+                )}
+                {isError && (
+                  <div className="flex items-center gap-2 text-red-500">
+                    <Info className="w-4 h-4" />
+                    <span className="text-[10px] font-black uppercase">Fehler beim Laden</span>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1">
               <button 
