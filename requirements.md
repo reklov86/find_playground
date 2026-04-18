@@ -13,8 +13,10 @@ A vibrant, mobile-first web application designed to help families in Germany fin
     *   **Automatic Detection**: Real-time high-accuracy GPS detection with a robust fallback for coarse locations. [✅ DONE]
     *   **Manual Search**: Integrated search bar for finding locations via Nominatim API. [✅ DONE]
 *   **Navigation & Routing**:
-    *   Support **Walking**, **Cycling**, and **Driving** with visual directions. [🕒 PENDING]
-    *   Support **Public Transport (PT)** via deep-linking to Google Maps. [🕒 PENDING]
+    *   **Multi-Modal Routing**: Integrated navigation support for **Walking**, **Cycling**, and **Driving**. [🕒 PENDING]
+    *   **Visual Paths**: Render the route path (polyline) directly on the map. [🕒 PENDING]
+    *   **Mode Selection**: Allow users to toggle between transport modes within the app. [🕒 PENDING]
+    *   **External Support**: Support **Public Transport (PT)** via deep-linking to Google Maps. [🕒 PENDING]
 *   **Playground Details**: Display equipment types, age suitability, and community-uploaded photos. [✅ PARTIAL]
     *(Implemented: Real-time name and equipment tags mapping)*
 
@@ -27,6 +29,7 @@ A vibrant, mobile-first web application designed to help families in Germany fin
 *   **Platform**: Modern React/Next.js Architecture. [✅ DONE]
 *   **Aesthetic**: "Premium and Playful" – Vibrant colors, glassmorphism, bubbly UI. [✅ DONE]
 *   **Map Experience**: 
+    *   **High-Visibility Pins**: Use distinct, interactive pins for playgrounds to ensure they are easily discoverable against the map background. [🕒 PENDING]
     *   3D building extrusions (zoom 15+). [✅ DONE]
     *   Detailed street names and labels in German. [✅ DONE]
     *   45-degree tilted camera. [✅ DONE]
