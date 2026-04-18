@@ -84,7 +84,74 @@
             const [showAuth, setShowAuth] = useState(false);
             const [playgroundPhotos, setPlaygroundPhotos] = useState([]);
 
+            const [locationError, setLocationError] = useState(null);
+
             const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6Ijk5MGYwYTYyYjY2MjRiNzJhOTE1ZjM4ZDkwODA4NmJjIiwiaCI6Im11cm11cjY0In0=';
+
+            const detectLocation = (isFirstLoad = false) => {
+                if (!navigator.geolocation) {
+                    setLocationError("Geolokalisierung wird von Ihrem Browser nicht unterstützt.");
+                    return;
+                }
+
+                setLoading(true);
+                setLocationError(null);
+
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                };
+
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const { longitude, latitude } = pos.coords;
+                        setUserLocation([longitude, latitude]);
+                        
+                        if (mapInstance.current) {
+                            mapInstance.current.flyTo({ 
+                                center: [longitude, latitude], 
+                                zoom: 16, 
+                                pitch: 60, 
+                                essential: true 
+                            });
+
+                            // Update or Add Marker
+                            if (window.userMarker) {
+                                window.userMarker.setLngLat([longitude, latitude]);
+                            } else {
+                                window.userMarker = new maplibregl.Marker({ color: '#4A90E2' })
+                                    .setLngLat([longitude, latitude])
+                                    .addTo(mapInstance.current);
+                            }
+                        }
+                        
+                        fetchPlaygrounds(latitude, longitude);
+                        setLoading(false);
+                    },
+                    (err) => {
+                        console.error('Location Error', err);
+                        setLoading(false);
+                        if (err.code === 1) {
+                            setLocationError("Standortzugriff verweigert. Bitte in den Browsereinstellungen erlauben.");
+                        } else if (isFirstLoad) {
+                            // On first load, if High Accuracy fails/times out, try once more with default
+                            navigator.geolocation.getCurrentPosition(
+                                (pos) => {
+                                    const { longitude, latitude } = pos.coords;
+                                    setUserLocation([longitude, latitude]);
+                                    mapInstance.current.flyTo({ center: [longitude, latitude], zoom: 14 });
+                                    fetchPlaygrounds(latitude, longitude);
+                                },
+                                () => setLocationError("Standort konnte nicht ermittelt werden.")
+                            );
+                        } else {
+                            setLocationError("Standort konnte nicht ermittelt werden (Timeout oder Signalverlust).");
+                        }
+                    },
+                    options
+                );
+            };
 
             useEffect(() => {
                 db.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
@@ -93,16 +160,14 @@
                 if (!mapInstance.current) {
                     mapInstance.current = new maplibregl.Map({
                         container: 'map',
-                        style: 'https://tiles.openfreemap.org/styles/bright', // Detailed style with labels
-                        center: [10.4515, 51.1657],
+                        style: 'https://tiles.openfreemap.org/styles/bright',
+                        center: [10.4515, 51.1657], // Center of DE
                         zoom: 6,
-                        pitch: 45, // Tilt for 3D feel
+                        pitch: 45,
                         antialias: true
                     });
 
                     mapInstance.current.on('load', () => {
-                        console.log('Map Loaded');
-                        
                         // Add 3D buildings
                         mapInstance.current.addLayer({
                             'id': '3d-buildings',
@@ -118,16 +183,7 @@
                             }
                         });
 
-                        navigator.geolocation.getCurrentPosition(
-                            (pos) => {
-                                const { longitude, latitude } = pos.coords;
-                                setUserLocation([longitude, latitude]);
-                                mapInstance.current.flyTo({ center: [longitude, latitude], zoom: 16, pitch: 60, essential: true });
-                                new maplibregl.Marker({ color: '#4A90E2' }).setLngLat([longitude, latitude]).addTo(mapInstance.current);
-                                fetchPlaygrounds(latitude, longitude);
-                            },
-                            (err) => console.error('Location Error', err)
-                        );
+                        detectLocation(true);
                     });
                 }
 
@@ -236,9 +292,17 @@
 
                     <div id="map"></div>
 
+                    {locationError && (
+                        <div className="location-error-notice" style={{ position: 'fixed', bottom: '100px', left: '20px', right: '20px', zIndex: 500, background: 'rgba(255, 255, 255, 0.9)', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid #FFEDEB' }}>
+                            <i data-lucide="alert-triangle" style={{ color: '#E74C3C' }}></i>
+                            <span style={{ fontSize: '0.9rem', color: '#666' }}>{locationError}</span>
+                            <button onClick={() => setLocationError(null)} style={{ border: 'none', background: 'none', marginLeft: 'auto', cursor: 'pointer', color: '#999' }}>×</button>
+                        </div>
+                    )}
+
                     <div className="fab-container">
-                        <button className="fab secondary" onClick={() => userLocation && mapInstance.current.flyTo({ center: userLocation, zoom: 16 })}><i data-lucide="crosshair"></i></button>
-                        <button className="fab" onClick={() => userLocation && fetchPlaygrounds(userLocation[1], userLocation[0])}><i data-lucide="refresh-cw"></i></button>
+                        <button className="fab secondary" onClick={() => detectLocation()} title="Mein Standort"><i data-lucide="crosshair"></i></button>
+                        <button className="fab" onClick={() => userLocation && fetchPlaygrounds(userLocation[1], userLocation[0])} title="Spielplätze suchen"><i data-lucide="refresh-cw"></i></button>
                     </div>
 
                     <div className={`playground-drawer ${selectedPlayground ? 'open' : ''}`}>
