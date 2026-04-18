@@ -51,9 +51,6 @@ export async function getRoute(
   profile: RoutingProfile = 'foot-walking'
 ): Promise<{ data: RouteData | null, error?: string }> {
   const currentKey = process.env.NEXT_PUBLIC_ORS_API_KEY;
-  
-  // Debug log (shown in browser console)
-  console.log('ORS Routing: Initializing with key status:', currentKey ? 'Present' : 'Missing');
 
   if (!currentKey) {
     console.error('OpenRouteService API key is missing (NEXT_PUBLIC_ORS_API_KEY).');
