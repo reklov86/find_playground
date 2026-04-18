@@ -16,6 +16,7 @@ const PLAYGROUND_PIN_URL = '/find_playground/playground-pin.svg';
 
 export interface MapViewHandle {
   flyTo: (longitude: number, latitude: number, zoom?: number) => void;
+  calculateRoute: (playground: GeoJSONFeature, profile?: RoutingProfile) => void;
 }
 
 interface MapViewProps {
@@ -63,6 +64,13 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
           pitch: 45
         });
       }
+    },
+    calculateRoute: (playground: GeoJSONFeature, profile?: RoutingProfile) => {
+      setSelectedPlayground(playground);
+      // Wait for state to be ready to fetch
+      setTimeout(() => {
+        handleFetchRoute(profile || activeMode, playground);
+      }, 0);
     }
   }));
 
@@ -128,8 +136,9 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
     }
   };
 
-  const handleFetchRoute = async (profile: RoutingProfile = activeMode) => {
-    if (!selectedPlayground) return;
+  const handleFetchRoute = async (profile: RoutingProfile = activeMode, targetPlayground?: GeoJSONFeature) => {
+    const playground = targetPlayground || selectedPlayground;
+    if (!playground) return;
     
     setIsRouting(true);
     setActiveMode(profile);
@@ -138,7 +147,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const start: [number, number] = [position.coords.longitude, position.coords.latitude];
-        const end: [number, number] = selectedPlayground.geometry.coordinates;
+        const end: [number, number] = playground.geometry.coordinates;
         
         const routeData = await getRoute(start, end, profile);
         if (routeData) {

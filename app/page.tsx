@@ -108,6 +108,14 @@ export default function Home() {
     }, 100);
   };
 
+  const handleRoutePlayground = (playground: any) => {
+    setViewMode('map');
+    // Wait for map to mount and calculate route
+    setTimeout(() => {
+      mapRef.current?.calculateRoute(playground);
+    }, 100);
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Auth Modal */}
@@ -278,7 +286,7 @@ export default function Home() {
                 playgrounds={playgrounds}
                 userLocation={userLocation}
                 onSelect={handleSelectPlayground}
-                onRoute={handleSelectPlayground} // For now, navigate by going to map
+                onRoute={handleRoutePlayground}
               />
             )}
           </motion.div>
