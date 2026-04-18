@@ -1,4 +1,4 @@
-# Spielplatz Entdecker (Playground Finder Germany)
+# find_playground: Spielplatz Entdecker
 
 A vibrant, premium web application to find playgrounds in Germany with real-time navigation and community photo sharing.
 
@@ -24,17 +24,17 @@ A vibrant, premium web application to find playgrounds in Germany with real-time
 Since this is a **no-build** project, you can simply open `index.html` in your browser.
 *Note: Some browser security policies (CORS) may require you to run a simple HTTP server (like VS Code's "Live Server" extension) for the app to function perfectly.*
 
-### GitHub Deployment (Later)
-1. Push this folder to a new **GitHub Repository**.
-2. Go to **Settings > Pages**.
-3. Select the `main` branch and `/ (root)` folder.
-4. Your app will be live at `https://yourname.github.io/repo-name/`.
+### GitHub Deployment
+This project is set up for **GitHub Pages**.
+1. Go to **Settings > Pages**.
+2. Select the `main` branch and `/ (root)` folder.
+3. Your app will be live at `https://reklov86.github.io/find_playground/`.
 
 ### Final Config
 To activate all features, ensure you have set:
-- `ORS_API_KEY` in `index.html` (provided by user).
-- **Supabase Credentials** in `index.html` (provided by user).
-- **Supabase SQL**: Run the script found in `documentation/supabase_setup.sql` (if you need it again).
+- `ORS_API_KEY` in `index.html`
+- **Supabase Credentials** in `index.html`
+- **Supabase SQL**: Run the script found in `documentation/supabase_setup.sql`.
 
 ---
 
@@ -43,4 +43,4 @@ To activate all features, ensure you have set:
 - `style.css`: The "Premium Playful" design system.
 - `requirements.md`: Detailed functional and non-functional requirements.
 - `implementation_plan.md`: Technical breakdown and architecture.
-- `app.js`: Reference file for modular development.
+- `documentation/supabase_setup.sql`: SQL script for backend setup.
