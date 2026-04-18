@@ -200,7 +200,11 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
         mapStyle={MAP_STYLE}
         onLoad={onMapLoad}
       >
-        <GeolocateControl position="top-right" trackUserLocation={true} />
+        <GeolocateControl 
+          position="top-right" 
+          trackUserLocation={true} 
+          fitBoundsOptions={{ zoom: viewState.zoom }} 
+        />
         <NavigationControl position="top-right" />
         <ScaleControl position="bottom-right" />
 
