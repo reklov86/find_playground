@@ -1,0 +1,156 @@
+"use client";
+
+import { motion } from "framer-motion";
+import MapView from "@/components/MapView";
+import { Search, MapPin, Navigation, Camera, LogIn } from "lucide-react";
+import Image from "next/image";
+
+export default function Home() {
+  return (
+    <div className="flex flex-col min-h-screen">
+      {/* Navigation Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex justify-between items-center bg-white/70 backdrop-blur-xl border-b border-white/20">
+        <div className="flex items-center gap-2">
+          <div className="bg-yellow-400 p-2 rounded-2xl shadow-lg shadow-yellow-200">
+            <MapPin className="text-white w-6 h-6" />
+          </div>
+          <span className="text-2xl font-extrabold tracking-tight text-slate-800">
+            Spielplatz <span className="text-yellow-500">Entdecker</span>
+          </span>
+        </div>
+        
+        <button className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
+          <LogIn className="w-5 h-5" />
+          Anmelden
+        </button>
+      </header>
+
+      <main className="flex-1 pt-24 pb-12 px-6 max-w-7xl mx-auto w-full tracking-tight">
+        {/* Hero Section */}
+        <section className="grid lg:grid-cols-2 gap-12 items-center mb-20 mt-8">
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }} 
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-[1.1] text-slate-900">
+              Finde den <span className="text-yellow-500">nächsten</span> Abenteuerplatz.
+            </h1>
+            <p className="text-xl text-slate-600 mb-10 max-w-lg leading-relaxed font-medium">
+              Entdecke die besten Spielplätze in ganz Deutschland mit 3D-Karten, 
+              Wegbeschreibungen und Community-Fotos.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1 group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-yellow-500 transition-colors" />
+                <input 
+                  type="text" 
+                  placeholder="Ort oder Straße suchen..." 
+                  className="w-full pl-12 pr-6 py-5 rounded-3xl bg-white border-4 border-slate-50 focus:border-yellow-200 outline-none shadow-xl transition-all text-lg font-semibold"
+                />
+              </div>
+              <button className="px-8 py-5 rounded-3xl bg-yellow-400 text-yellow-900 font-extrabold text-lg hover:bg-yellow-300 transition-all shadow-xl shadow-yellow-100 flex items-center justify-center gap-2">
+                <Navigation className="w-6 h-6" />
+                Los geht's
+              </button>
+            </div>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="relative"
+          >
+            <div className="relative h-[400px] md:h-[500px] w-full rounded-[3.5rem] overflow-hidden shadow-2xl border-[12px] border-white">
+              <Image 
+                src="/find_playground/playground-hero.png" 
+                alt="Playground Hero" 
+                fill 
+                className="object-cover"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            </div>
+            
+            {/* Floating Stats */}
+            <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-3xl shadow-2xl border border-slate-50 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                <Camera className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-slate-800 leading-none">12k+</div>
+                <div className="text-xs text-slate-400 font-bold tracking-widest mt-1">FOTOS</div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Map Section */}
+        <section className="space-y-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-extrabold text-slate-900 mb-1">Entdecke in deiner Nähe</h2>
+              <p className="text-slate-500 font-bold tracking-wide">INTERAKTIVE 3D KARTE ALLER SPIELPLÄTZE</p>
+            </div>
+            <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1">
+              <button className="px-6 py-2 rounded-xl bg-white text-slate-900 font-bold shadow-sm text-sm">Liste</button>
+              <button className="px-6 py-2 rounded-xl text-slate-500 font-bold text-sm hover:bg-white hover:text-slate-900 transition-all">Karte</button>
+            </div>
+          </div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <MapView />
+          </motion.div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-400 py-16 px-6 mt-20">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-12">
+          <div>
+            <div className="flex items-center gap-2 mb-6">
+              <div className="bg-yellow-400 p-1.5 rounded-xl">
+                <MapPin className="text-white w-5 h-5" />
+              </div>
+              <span className="text-xl font-extrabold text-white">Spielplatz Entdecker</span>
+            </div>
+            <p className="text-slate-500 leading-relaxed max-w-xs font-medium">
+              Deutschlands größtes Portal für Familien-Abenteuer. Finden, bewerten und teilen.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h4 className="text-white font-bold mb-4 uppercase text-xs tracking-widest">App</h4>
+              <ul className="space-y-2 text-sm font-semibold">
+                <li><a href="#" className="hover:text-yellow-500 transition-colors">Karten</a></li>
+                <li><a href="#" className="hover:text-yellow-500 transition-colors">Suche</a></li>
+                <li><a href="#" className="hover:text-yellow-500 transition-colors">Favoriten</a></li>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h4 className="text-white font-bold mb-4 uppercase text-xs tracking-widest">Rechtliches</h4>
+              <ul className="space-y-2 text-sm font-semibold">
+                <li><a href="#" className="hover:text-yellow-500 transition-colors">Impressum</a></li>
+                <li><a href="#" className="hover:text-yellow-500 transition-colors">Datenschutz</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="text-sm">
+            <h4 className="text-white font-bold mb-6 uppercase text-xs tracking-widest">Vernetzen</h4>
+            <p className="text-slate-500 font-medium">Folge uns für die neuesten Entdeckungen.</p>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto border-t border-slate-800 mt-12 pt-8 text-center text-xs font-bold tracking-widest uppercase">
+          © 2026 reklov86. Made for kids and families.
+        </div>
+      </footer>
+    </div>
+  );
+}
