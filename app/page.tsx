@@ -8,13 +8,23 @@ import { Search, MapPin, Navigation, Camera, LogIn, LogOut, User as UserIcon, Lo
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import ListView from "@/components/ListView";
+import { usePlaygrounds } from "@/hooks/usePlaygrounds";
 
 export default function Home() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [bbox, setBbox] = useState<[number, number, number, number] | null>(null);
+  const [zoom, setZoom] = useState(6);
+  const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
+  
   const mapRef = useRef<MapViewHandle>(null);
+
+  const { data: playgroundsData } = usePlaygrounds(bbox, zoom);
+  const playgrounds = playgroundsData?.features || [];
 
   useEffect(() => {
     // Check initial session
@@ -26,6 +36,20 @@ export default function Home() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
+
+    // Detect user location for sorting
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+        },
+        (error) => console.warn('Geolocation error:', error),
+        { enableHighAccuracy: true }
+      );
+    }
 
     return () => subscription.unsubscribe();
   }, []);
@@ -40,7 +64,6 @@ export default function Home() {
 
     setIsSearching(true);
     try {
-      // Search with Nominatim (limited to Germany)
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1&countrycodes=de`
       );
@@ -48,7 +71,16 @@ export default function Home() {
 
       if (data && data.length > 0) {
         const { lon, lat } = data[0];
-        mapRef.current?.flyTo(parseFloat(lon), parseFloat(lat), 15);
+        const longitude = parseFloat(lon);
+        const latitude = parseFloat(lat);
+        
+        // Ensure we switch to map view to show the result
+        setViewMode('map');
+        
+        // Wait a small bit for the map to mount if we were in list mode
+        setTimeout(() => {
+          mapRef.current?.flyTo(longitude, latitude, 15);
+        }, 100);
       } else {
         alert("Ort nicht gefunden. Bitte versuche es mit einer genaueren Angabe.");
       }
@@ -58,6 +90,17 @@ export default function Home() {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleSelectPlayground = (playground: any) => {
+    setViewMode('map');
+    setTimeout(() => {
+      mapRef.current?.flyTo(
+        playground.geometry.coordinates[0],
+        playground.geometry.coordinates[1],
+        16
+      );
+    }, 100);
   };
 
   return (
@@ -186,21 +229,53 @@ export default function Home() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h2 className="text-3xl font-extrabold text-slate-900 mb-1">Entdecke in deiner Nähe</h2>
-              <p className="text-slate-500 font-bold tracking-wide">INTERAKTIVE 3D KARTE ALLER SPIELPLÄTZE</p>
+              <p className="text-slate-500 font-bold tracking-wide uppercase">Interaktive 3D Karte & Liste</p>
             </div>
             <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1">
-              <button className="px-6 py-2 rounded-xl bg-white text-slate-900 font-bold shadow-sm text-sm">Liste</button>
-              <button className="px-6 py-2 rounded-xl text-slate-500 font-bold text-sm hover:bg-white hover:text-slate-900 transition-all">Karte</button>
+              <button 
+                onClick={() => setViewMode('list')}
+                className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                  viewMode === 'list' 
+                    ? 'bg-white text-slate-900 shadow-sm' 
+                    : 'text-slate-500 hover:bg-white/50 hover:text-slate-900'
+                }`}
+              >
+                Liste
+              </button>
+              <button 
+                onClick={() => setViewMode('map')}
+                className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                  viewMode === 'map' 
+                    ? 'bg-white text-slate-900 shadow-sm' 
+                    : 'text-slate-500 hover:bg-white/50 hover:text-slate-900'
+                }`}
+              >
+                Karte
+              </button>
             </div>
           </div>
           
           <motion.div
             initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            animate={{ opacity: 1, y: 0 }}
+            key={viewMode}
+            transition={{ duration: 0.5 }}
           >
-            <MapView ref={mapRef} />
+            {viewMode === 'map' ? (
+              <MapView 
+                ref={mapRef} 
+                playgrounds={playgrounds}
+                onBboxChange={setBbox}
+                onViewStateChange={(vs) => setZoom(vs.zoom)}
+              />
+            ) : (
+              <ListView 
+                playgrounds={playgrounds}
+                userLocation={userLocation}
+                onSelect={handleSelectPlayground}
+                onRoute={handleSelectPlayground} // For now, navigate by going to map
+              />
+            )}
           </motion.div>
         </section>
       </main>

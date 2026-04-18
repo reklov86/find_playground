@@ -11,6 +11,12 @@ export interface OSMElement {
   tags?: Record<string, string>;
 }
 
+export interface PlaygroundProperties extends Record<string, string | number | boolean | null | undefined> {
+  name: string;
+  osm_id: number;
+  equipment?: string;
+}
+
 export interface GeoJSONFeature {
   type: 'Feature';
   id: number;
@@ -18,7 +24,7 @@ export interface GeoJSONFeature {
     type: 'Point';
     coordinates: [number, number];
   };
-  properties: Record<string, string | number | boolean | null>;
+  properties: PlaygroundProperties;
 }
 
 export interface GeoJSONFeatureCollection {
@@ -33,38 +39,21 @@ const OVERPASS_ENDPOINTS = [
 ];
 
 /**
- * Fetches playgrounds from Overpass API within a bounding box.
- * @param bbox [south, west, north, east]
+ * Generic fetcher for Overpass data with retries.
  */
-export async function fetchPlaygrounds(bbox: [number, number, number, number]): Promise<GeoJSONFeatureCollection> {
-  const [south, west, north, east] = bbox;
-  
-  const query = `
-    [out:json][timeout:60];
-    nwr["leisure"="playground"](${south},${west},${north},${east});
-    out center;
-  `.trim();
-
+async function executeOverpassQuery(query: string): Promise<GeoJSONFeatureCollection> {
   let lastError: Error | null = null;
 
-  // Try different endpoints in case of timeouts or rate limits
   for (const endpoint of OVERPASS_ENDPOINTS) {
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
         body: query,
-        // Short timeout for the fetch itself to switch mirrors quickly if one is hanging
         signal: AbortSignal.timeout(30000) 
       });
 
-      if (response.status === 429) {
-        console.warn(`Overpass Endpoint ${endpoint} rate limited, trying next...`);
-        continue;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Overpass API error: ${response.statusText}`);
-      }
+      if (response.status === 429) continue;
+      if (!response.ok) throw new Error(`Overpass API error: ${response.statusText}`);
 
       const data = await response.json();
       const elements: OSMElement[] = data.elements || [];
@@ -92,20 +81,40 @@ export async function fetchPlaygrounds(bbox: [number, number, number, number]): 
           };
         });
 
-      return {
-        type: 'FeatureCollection',
-        features,
-      };
+      return { type: 'FeatureCollection', features };
     } catch (error) {
       console.error(`Error with Overpass endpoint ${endpoint}:`, error);
       lastError = error as Error;
-      continue; // Try next endpoint
+      continue;
     }
   }
 
   console.error('All Overpass endpoints failed:', lastError);
-  return {
-    type: 'FeatureCollection',
-    features: [],
-  };
+  return { type: 'FeatureCollection', features: [] };
+}
+
+/**
+ * Fetches playgrounds from Overpass API within a bounding box.
+ * @param bbox [south, west, north, east]
+ */
+export async function fetchPlaygrounds(bbox: [number, number, number, number]): Promise<GeoJSONFeatureCollection> {
+  const [south, west, north, east] = bbox;
+  const query = `
+    [out:json][timeout:60];
+    nwr["leisure"="playground"](${south},${west},${north},${east});
+    out center;
+  `.trim();
+  return executeOverpassQuery(query);
+}
+
+/**
+ * Fetches playgrounds around a specific coordinate within a radius (in meters).
+ */
+export async function fetchPlaygroundsAround(lat: number, lon: number, radiusMeters: number = 5000): Promise<GeoJSONFeatureCollection> {
+  const query = `
+    [out:json][timeout:60];
+    nwr["leisure"="playground"](around:${radiusMeters},${lat},${lon});
+    out center;
+  `.trim();
+  return executeOverpassQuery(query);
 }

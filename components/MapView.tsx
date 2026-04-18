@@ -6,6 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { usePlaygrounds } from '@/hooks/usePlaygrounds';
 import { Navigation, Info, Bike, Car, Footprints, X, Clock, MapPin } from 'lucide-react';
 import { getRoute, RoutingProfile, RouteData } from '@/lib/routing';
+import { GeoJSONFeature } from '@/lib/overpass';
 
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/bright';
 
@@ -33,25 +34,12 @@ interface MapViewProps {
     pitch: number;
     bearing: number;
   };
+  playgrounds?: GeoJSONFeature[];
+  onBboxChange?: (bbox: [number, number, number, number]) => void;
+  onViewStateChange?: (viewState: any) => void;
 }
 
-interface PlaygroundProperties {
-  name: string;
-  equipment?: string;
-  osm_id: number;
-  [key: string]: string | number | boolean | null | undefined;
-}
-
-interface PlaygroundFeature {
-  type: 'Feature';
-  geometry: {
-    type: 'Point';
-    coordinates: [number, number];
-  };
-  properties: PlaygroundProperties;
-}
-
-const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState }, ref) => {
+const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, playgrounds: externalPlaygrounds, onBboxChange, onViewStateChange }, ref) => {
   const mapRef = useRef<MapRef>(null);
   const [viewState, setViewState] = useState({
     longitude: 10.4515, // Center of Germany
@@ -63,12 +51,14 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState }, r
   });
 
   const [bbox, setBbox] = useState<[number, number, number, number] | null>(null);
-  const [selectedPlayground, setSelectedPlayground] = useState<PlaygroundFeature | null>(null);
+  const [selectedPlayground, setSelectedPlayground] = useState<GeoJSONFeature | null>(null);
   const [route, setRoute] = useState<RouteData | null>(null);
   const [activeMode, setActiveMode] = useState<RoutingProfile>('foot-walking');
   const [isRouting, setIsRouting] = useState(false);
 
-  const { data: playgrounds } = usePlaygrounds(bbox, viewState.zoom);
+  // If no external data is provided, use own query (fallback)
+  const { data: internalPlaygrounds } = usePlaygrounds(bbox, viewState.zoom);
+  const playgrounds = externalPlaygrounds || internalPlaygrounds?.features || [];
 
   useImperativeHandle(ref, () => ({
     flyTo: (longitude: number, latitude: number, zoom: number = 14) => {
@@ -87,12 +77,14 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState }, r
   const updateBbox = () => {
     if (mapRef.current) {
       const bounds = mapRef.current.getBounds();
-      setBbox([
+      const newBbox: [number, number, number, number] = [
         bounds.getSouth(),
         bounds.getWest(),
         bounds.getNorth(),
         bounds.getEast()
-      ]);
+      ];
+      setBbox(newBbox);
+      if (onBboxChange) onBboxChange(newBbox);
     }
   };
 
@@ -146,7 +138,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState }, r
   const onMapClick = (event: MapLayerMouseEvent) => {
     const feature = event.features && event.features[0];
     if (feature) {
-      setSelectedPlayground(feature as unknown as PlaygroundFeature);
+      setSelectedPlayground(feature as unknown as GeoJSONFeature);
     } else {
       setSelectedPlayground(null);
       // Only clear route if we click on empty map and not on routing controls
@@ -206,7 +198,10 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState }, r
       <Map
         ref={mapRef}
         {...viewState}
-        onMove={evt => setViewState(evt.viewState)}
+        onMove={evt => {
+          setViewState(evt.viewState);
+          if (onViewStateChange) onViewStateChange(evt.viewState);
+        }}
         onMoveEnd={updateBbox}
         onClick={onMapClick}
         interactiveLayerIds={['playground-layer']}
@@ -218,8 +213,8 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState }, r
         <NavigationControl position="top-right" />
         <ScaleControl position="bottom-right" />
 
-        {playgrounds && (
-          <Source type="geojson" data={playgrounds}>
+        {playgrounds && playgrounds.length > 0 && (
+          <Source type="geojson" data={{ type: 'FeatureCollection', features: playgrounds }}>
             <Layer
               id="playground-layer"
               type="symbol"
