@@ -4,7 +4,7 @@ import React, { useRef, useImperativeHandle, forwardRef, useState, useEffect } f
 import Map, { NavigationControl, ScaleControl, GeolocateControl, MapRef, Source, Layer, Popup, MapLayerMouseEvent } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { usePlaygrounds } from '@/hooks/usePlaygrounds';
-import { Navigation, Info, Bike, Car, Footprints, X, Clock, MapPin } from 'lucide-react';
+import { Navigation, Info, Bike, Car, Footprints, X, Clock, MapPin, ChevronRight, List, Map as MapIcon } from 'lucide-react';
 import { getRoute, RoutingProfile, RouteData } from '@/lib/routing';
 import { GeoJSONFeature } from '@/lib/overpass';
 
@@ -47,6 +47,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
   const [route, setRoute] = useState<RouteData | null>(null);
   const [activeMode, setActiveMode] = useState<RoutingProfile>('foot-walking');
   const [isRouting, setIsRouting] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
 
   // If no external data is provided, use own query (fallback)
   const { data: internalPlaygrounds } = usePlaygrounds(bbox, viewState.zoom);
@@ -157,6 +158,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
         const routeData = await getRoute(start, end, profile);
         if (routeData) {
           setRoute(routeData);
+          setShowInstructions(true);
           
           // Fly to overview of the route
           if (mapRef.current) {
@@ -187,6 +189,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
   const clearRoute = () => {
     setRoute(null);
     setSelectedPlayground(null);
+    setShowInstructions(false);
   };
 
   return (
@@ -358,6 +361,81 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
           </Popup>
         )}
       </Map>
+      
+      {/* Route Instructions Sidebar */}
+      {route && showInstructions && (
+        <div className="absolute top-4 left-4 z-20 w-80 max-h-[calc(100%-2rem)] bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-white/50 overflow-hidden flex flex-col pointer-events-auto">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900">Wegbeschreibung</h3>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 uppercase tracking-tight">
+                  {(route.features[0].properties.summary.distance / 1000).toFixed(1)} km
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                  {Math.round(route.features[0].properties.summary.duration / 60)} min
+                </span>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowInstructions(false)}
+              className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+            {route.features[0].properties.segments[0].steps.map((step, idx) => (
+              <div 
+                key={idx} 
+                className="group flex gap-3 p-3 rounded-2xl hover:bg-yellow-50/50 transition-colors border border-transparent hover:border-yellow-100"
+              >
+                <div className="mt-0.5 w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-yellow-100 group-hover:text-yellow-600 transition-colors">
+                  <span className="text-[10px] font-black">{idx + 1}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-slate-700 leading-snug mb-1">
+                    {step.instruction}
+                  </p>
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                    <span>{step.distance >= 1000 ? `${(step.distance/1000).toFixed(1)} km` : `${Math.round(step.distance)} m`}</span>
+                    {step.name && step.name !== '-' && (
+                      <>
+                        <span className="w-1 h-1 rounded-full bg-slate-200" />
+                        <span className="text-slate-500">{step.name}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            <div className="pt-4 flex items-center justify-center gap-2">
+              <div className="w-10 h-1 rounded-full bg-slate-100" />
+              <MapPin className="w-4 h-4 text-yellow-500" />
+              <div className="w-10 h-1 rounded-full bg-slate-100" />
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-50/50 border-t border-slate-100">
+            <p className="text-[10px] text-center font-bold text-slate-400 uppercase tracking-widest">
+              Ziel: {selectedPlayground?.properties.name}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Show Instructions Toggle (when hidden but route active) */}
+      {route && !showInstructions && (
+        <button
+          onClick={() => setShowInstructions(true)}
+          className="absolute top-4 left-4 z-20 px-4 py-2.5 bg-yellow-400 text-yellow-900 rounded-2xl shadow-xl border-2 border-white hover:bg-yellow-300 transition-all flex items-center gap-2 font-bold text-xs"
+        >
+          <List className="w-4 h-4" />
+          Liste anzeigen
+        </button>
+      )}
 
       {/* Floating Zoom Alert */}
       {viewState.zoom < 14 && (

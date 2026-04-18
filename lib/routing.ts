@@ -9,6 +9,15 @@ const BASE_URL = 'https://api.openrouteservice.org/v2/directions';
 
 export type RoutingProfile = 'foot-walking' | 'cycling-regular' | 'driving-car';
 
+export interface RouteStep {
+  distance: number;
+  duration: number;
+  type: number;
+  instruction: string;
+  name: string;
+  way_points: [number, number];
+}
+
 export interface RouteData {
   type: 'FeatureCollection';
   features: Array<{
@@ -22,6 +31,11 @@ export interface RouteData {
         distance: number;
         duration: number;
       };
+      segments: Array<{
+        distance: number;
+        duration: number;
+        steps: RouteStep[];
+      }>;
     };
   }>;
 }
@@ -43,28 +57,32 @@ export async function getRoute(
   }
 
   try {
+    const body = {
+      coordinates: [start, end],
+      instructions: true,
+      language: 'de', // Request instructions in German
+      units: 'm'
+    };
+
     const response = await fetch(`${BASE_URL}/${profile}/geojson`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': API_KEY, // ORS uses Authorization header for API Key in some versions, or api_key param
+        'Authorization': API_KEY,
       },
-      body: JSON.stringify({
-        coordinates: [start, end],
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error('ORS Routing Error:', errorData);
       
-      // Fallback: If Authorization header fails, try api_key query param (some ORS plans differ)
       if (response.status === 401 || response.status === 403) {
         const fallbackUrl = `${BASE_URL}/${profile}/geojson?api_key=${API_KEY}`;
         const fallbackResponse = await fetch(fallbackUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ coordinates: [start, end] }),
+          body: JSON.stringify(body),
         });
         
         if (fallbackResponse.ok) {
