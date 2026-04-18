@@ -15,7 +15,7 @@ export function usePlaygrounds(bbox: [number, number, number, number] | null, zo
       if (!bbox) return { type: 'FeatureCollection', features: [] };
       return fetchPlaygrounds(bbox);
     },
-    enabled: !!bbox && zoom >= 13, // Minimum zoom level to prevent massive API calls
+    enabled: !!bbox && zoom >= 14, // Minimum zoom level to prevent massive API calls
     staleTime: 1000 * 60 * 5, // Cache results for 5 minutes
     placeholderData: (previousData) => previousData, // Keep old data while fetching new to prevent flickering
   });

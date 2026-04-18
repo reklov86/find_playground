@@ -26,6 +26,12 @@ export interface GeoJSONFeatureCollection {
   features: GeoJSONFeature[];
 }
 
+const OVERPASS_ENDPOINTS = [
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.openstreetmap.fr/api/interpreter'
+];
+
 /**
  * Fetches playgrounds from Overpass API within a bounding box.
  * @param bbox [south, west, north, east]
@@ -34,56 +40,72 @@ export async function fetchPlaygrounds(bbox: [number, number, number, number]): 
   const [south, west, north, east] = bbox;
   
   const query = `
-    [out:json][timeout:30];
+    [out:json][timeout:60];
     nwr["leisure"="playground"](${south},${west},${north},${east});
     out center;
   `.trim();
 
-  try {
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: query,
-    });
+  let lastError: Error | null = null;
 
-    if (!response.ok) {
-      throw new Error(`Overpass API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const elements: OSMElement[] = data.elements || [];
-
-    const features: GeoJSONFeature[] = elements
-      .filter(el => (el.type === 'node' && el.lat && el.lon) || (el.center))
-      .map((el: OSMElement) => {
-        const coords: [number, number] = el.type === 'node' 
-          ? [el.lon!, el.lat!] 
-          : [el.center!.lon, el.center!.lat];
-
-        return {
-          type: 'Feature',
-          id: el.id,
-          geometry: {
-            type: 'Point',
-            coordinates: coords,
-          },
-          properties: {
-            ...el.tags,
-            osm_id: el.id,
-            name: el.tags?.name || 'Unbekannter Spielplatz',
-            equipment: el.tags?.playground || 'Spielplatz',
-          },
-        };
+  // Try different endpoints in case of timeouts or rate limits
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: query,
+        // Short timeout for the fetch itself to switch mirrors quickly if one is hanging
+        signal: AbortSignal.timeout(30000) 
       });
 
-    return {
-      type: 'FeatureCollection',
-      features,
-    };
-  } catch (error) {
-    console.error('Error fetching playgrounds from Overpass:', error);
-    return {
-      type: 'FeatureCollection',
-      features: [],
-    };
+      if (response.status === 429) {
+        console.warn(`Overpass Endpoint ${endpoint} rate limited, trying next...`);
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Overpass API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const elements: OSMElement[] = data.elements || [];
+
+      const features: GeoJSONFeature[] = elements
+        .filter(el => (el.type === 'node' && el.lat && el.lon) || (el.center))
+        .map((el: OSMElement) => {
+          const coords: [number, number] = el.type === 'node' 
+            ? [el.lon!, el.lat!] 
+            : [el.center!.lon, el.center!.lat];
+
+          return {
+            type: 'Feature',
+            id: el.id,
+            geometry: {
+              type: 'Point',
+              coordinates: coords,
+            },
+            properties: {
+              ...el.tags,
+              osm_id: el.id,
+              name: el.tags?.name || 'Unbekannter Spielplatz',
+              equipment: el.tags?.playground || 'Spielplatz',
+            },
+          };
+        });
+
+      return {
+        type: 'FeatureCollection',
+        features,
+      };
+    } catch (error) {
+      console.error(`Error with Overpass endpoint ${endpoint}:`, error);
+      lastError = error as Error;
+      continue; // Try next endpoint
+    }
   }
+
+  console.error('All Overpass endpoints failed:', lastError);
+  return {
+    type: 'FeatureCollection',
+    features: [],
+  };
 }
