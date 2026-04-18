@@ -4,7 +4,6 @@
  * OpenRouteService integration for multi-modal routing.
  */
 
-const API_KEY = process.env.NEXT_PUBLIC_ORS_API_KEY;
 const BASE_URL = 'https://api.openrouteservice.org/v2/directions';
 
 export type RoutingProfile = 'foot-walking' | 'cycling-regular' | 'driving-car';
@@ -51,12 +50,17 @@ export async function getRoute(
   end: [number, number],
   profile: RoutingProfile = 'foot-walking'
 ): Promise<{ data: RouteData | null, error?: string }> {
-  if (!API_KEY) {
-    console.error('OpenRouteService API key is missing.');
+  const currentKey = process.env.NEXT_PUBLIC_ORS_API_KEY;
+  
+  // Debug log (shown in browser console)
+  console.log('ORS Routing: Initializing with key status:', currentKey ? 'Present' : 'Missing');
+
+  if (!currentKey) {
+    console.error('OpenRouteService API key is missing (NEXT_PUBLIC_ORS_API_KEY).');
     return { data: null, error: 'API_KEY_MISSING' };
   }
 
-  const queryParams = new URLSearchParams({ api_key: API_KEY });
+  const queryParams = new URLSearchParams({ api_key: currentKey });
   const url = `${BASE_URL}/${profile}/geojson?${queryParams.toString()}`;
 
   try {
