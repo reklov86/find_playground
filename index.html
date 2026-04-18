@@ -85,8 +85,44 @@
             const [playgroundPhotos, setPlaygroundPhotos] = useState([]);
 
             const [locationError, setLocationError] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
 
             const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6Ijk5MGYwYTYyYjY2MjRiNzJhOTE1ZjM4ZDkwODA4NmJjIiwiaCI6Im11cm11cjY0In0=';
+
+            const handleSearch = async (e) => {
+                if (e) e.preventDefault();
+                if (!searchQuery.trim()) return;
+
+                setLoading(true);
+                setLocationError(null);
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&countrycodes=de`);
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        const { lat, lon } = data[0];
+                        const latitude = parseFloat(lat);
+                        const longitude = parseFloat(lon);
+                        
+                        setUserLocation([longitude, latitude]);
+                        mapInstance.current.flyTo({ center: [longitude, latitude], zoom: 15, pitch: 45 });
+                        
+                        if (window.userMarker) {
+                            window.userMarker.setLngLat([longitude, latitude]);
+                        } else {
+                            window.userMarker = new maplibregl.Marker({ color: '#4A90E2' }).setLngLat([longitude, latitude]).addTo(mapInstance.current);
+                        }
+
+                        fetchPlaygrounds(latitude, longitude);
+                    } else {
+                        setLocationError("Ort nicht gefunden. Bitte genauer suchen.");
+                    }
+                } catch (err) {
+                    console.error('Search Error', err);
+                    setLocationError("Suche fehlgeschlagen.");
+                } finally {
+                    setLoading(false);
+                }
+            };
 
             const detectLocation = (isFirstLoad = false) => {
                 if (!navigator.geolocation) {
@@ -284,7 +320,24 @@
                 <div className="app-container">
                     {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
                     <header className="header">
-                        <div className="logo">Spielplatz <span>Entdecker</span></div>
+                        <div className="logo" onClick={() => window.location.reload()} style={{ cursor: 'pointer' }}>
+                            <i data-lucide="map"></i>
+                        </div>
+                        
+                        <form className="search-container" onSubmit={handleSearch}>
+                            <i data-lucide="search" size="18" style={{ color: '#999' }}></i>
+                            <input 
+                                type="text" 
+                                className="search-input" 
+                                placeholder="Stadt oder Straße suchen..." 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <button type="submit" className="search-btn">
+                                <i data-lucide="arrow-right"></i>
+                            </button>
+                        </form>
+
                         <div className="user-menu" onClick={() => !user ? setShowAuth(true) : db.auth.signOut()}>
                             <i data-lucide={user ? "log-out" : "user"}></i>
                         </div>
