@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import MapView from "@/components/MapView";
+import MapView, { MapViewHandle } from "@/components/MapView";
 import AuthModal from "@/components/AuthModal";
-import { Search, MapPin, Navigation, Camera, LogIn, LogOut, User as UserIcon } from "lucide-react";
+import { Search, MapPin, Navigation, Camera, LogIn, LogOut, User as UserIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
@@ -12,6 +12,9 @@ import { User } from "@supabase/supabase-js";
 export default function Home() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const mapRef = useRef<MapViewHandle>(null);
 
   useEffect(() => {
     // Check initial session
@@ -29,6 +32,32 @@ export default function Home() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  const handleSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!searchQuery.trim() || isSearching) return;
+
+    setIsSearching(true);
+    try {
+      // Search with Nominatim (limited to Germany)
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1&countrycodes=de`
+      );
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        const { lon, lat } = data[0];
+        mapRef.current?.flyTo(parseFloat(lon), parseFloat(lat), 15);
+      } else {
+        alert("Ort nicht gefunden. Bitte versuche es mit einer genaueren Angabe.");
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      alert("Suche fehlgeschlagen. Bitte versuche es später erneut.");
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return (
@@ -100,20 +129,26 @@ export default function Home() {
               Wegbeschreibungen und Community-Fotos.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4">
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1 group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-yellow-500 transition-colors" />
                 <input 
                   type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Ort oder Straße suchen..." 
                   className="w-full pl-12 pr-6 py-5 rounded-3xl bg-white border-4 border-slate-50 focus:border-yellow-200 outline-none shadow-xl transition-all text-lg font-semibold"
                 />
               </div>
-              <button className="px-8 py-5 rounded-3xl bg-yellow-400 text-yellow-900 font-extrabold text-lg hover:bg-yellow-300 transition-all shadow-xl shadow-yellow-100 flex items-center justify-center gap-2">
-                <Navigation className="w-6 h-6" />
-                Los geht's
+              <button 
+                type="submit"
+                disabled={isSearching}
+                className="px-8 py-5 rounded-3xl bg-yellow-400 text-yellow-900 font-extrabold text-lg hover:bg-yellow-300 transition-all shadow-xl shadow-yellow-100 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSearching ? <Loader2 className="w-6 h-6 animate-spin text-yellow-900" /> : <Navigation className="w-6 h-6" />}
+                Los geht&apos;s
               </button>
-            </div>
+            </form>
           </motion.div>
 
           <motion.div 
@@ -165,7 +200,7 @@ export default function Home() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <MapView />
+            <MapView ref={mapRef} />
           </motion.div>
         </section>
       </main>

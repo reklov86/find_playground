@@ -38,8 +38,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         alert('Registrierung erfolgreich! Bitte überprüfe deine E-Mails.');
       }
       onClose();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Ein unbekannter Fehler ist aufgetreten.");
+      }
     } finally {
       setLoading(false);
     }
