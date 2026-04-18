@@ -103,7 +103,7 @@ export default function Home() {
       mapRef.current?.flyTo(
         playground.geometry.coordinates[0],
         playground.geometry.coordinates[1],
-        16
+        16.5
       );
     }, 100);
   };
@@ -117,7 +117,7 @@ export default function Home() {
   };
 
   const handleSwitchToMap = () => {
-    setZoom(14);
+    setZoom(16.5);
     setViewMode('map');
   };
 
