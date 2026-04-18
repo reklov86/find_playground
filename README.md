@@ -21,8 +21,8 @@ A vibrant, premium web application to find playgrounds in Germany with real-time
 ## 🚀 Deployment & Local Setup
 
 ### Local Run
-Since this is a **no-build** project, you can simply open `index.html` in your browser.
-*Note: Some browser security policies (CORS) may require you to run a simple HTTP server (like VS Code's "Live Server" extension) for the app to function perfectly.*
+Since this is a **no-build** project, you can simply open `index.html` in your browser. 
+*Note: Because React logic is now in a separate `app.js` file, you **MUST** use a local HTTP server (like VS Code's "Live Server" extension) to avoid CORS security errors.*
 
 ### GitHub Deployment
 This project is set up for **GitHub Pages**.
@@ -32,15 +32,15 @@ This project is set up for **GitHub Pages**.
 
 ### Final Config
 To activate all features, ensure you have set:
-- `ORS_API_KEY` in `index.html`
-- **Supabase Credentials** in `index.html`
+- `ORS_API_KEY` in `app.js`
+- **Supabase Credentials** in `app.js`
 - **Supabase SQL**: Run the script found in `documentation/supabase_setup.sql`.
 
 ---
 
 ## 📂 Project Structure
-- `index.html`: The core application (Logic + UI).
+- `index.html`: The main entry point and UI structure.
+- `app.js`: Core React application logic (Search, Geolocation, APIs).
 - `style.css`: The "Premium Playful" design system.
 - `requirements.md`: Detailed functional and non-functional requirements.
-- `implementation_plan.md`: Technical breakdown and architecture.
 - `documentation/supabase_setup.sql`: SQL script for backend setup.
