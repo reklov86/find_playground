@@ -116,6 +116,11 @@ export default function Home() {
     }, 100);
   };
 
+  const handleSwitchToMap = () => {
+    setZoom(14);
+    setViewMode('map');
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Auth Modal */}
@@ -256,7 +261,7 @@ export default function Home() {
                 Liste
               </button>
               <button 
-                onClick={() => setViewMode('map')}
+                onClick={handleSwitchToMap}
                 className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
                   viewMode === 'map' 
                     ? 'bg-white text-slate-900 shadow-sm' 
