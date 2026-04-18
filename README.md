@@ -7,10 +7,11 @@ A high-performance, mobile-first web application designed to help families in Ge
 ## ✨ Features
 
 - 🗺️ **Interactive 3D Maps**: Explore playgrounds with 3D building extrusions and a dynamic 45-degree tilted view.
-- 📍 **Real-time Discovery**: Automatic GPS location and high-accuracy manual search (Nominatim API).
-- 🚶 **Multimodal Routing**: Integrated walking, cycling, and driving directions via OpenRouteService.
-- 🚌 **Public Transport**: Deep-links to Google Maps for accurate German transit data.
-- 📸 **Community Driven**: Authenticated users can upload and view photos of playgrounds via Supabase.
+- 📍 **Functional Search**: Real-time high-accuracy search for cities, streets, and landmarks via Nominatim API. [✅ LIVE]
+- 🔐 **Secure Authentication**: Full user signup and login flow powered by Supabase Auth. [✅ LIVE]
+- 🚶 **Multimodal Routing**: [🕒 COMING SOON] Integrated walking, cycling, and driving directions via OpenRouteService.
+- 🚌 **Public Transport**: [🕒 COMING SOON] Deep-links to Google Maps for accurate German transit data.
+- 📸 **Community Photos**: Authenticated users can view photos (Upload coming soon).
 - 🎨 **Premium UI**: Vibrant colors, glassmorphism, and smooth Framer Motion animations.
 
 ## 🚀 Tech Stack
