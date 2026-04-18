@@ -37,14 +37,19 @@ export default function Home() {
       setUser(session?.user ?? null);
     });
 
-    // Detect user location for sorting
+    // Detect user location for sorting and initial map focus
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          });
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          setUserLocation({ lat, lon });
+          
+          // Automatically focus map on actual location with ~400m zoom (15.5)
+          // Use a small delay to ensure MapView is initialized
+          setTimeout(() => {
+            mapRef.current?.flyTo(lon, lat, 15.5);
+          }, 500);
         },
         (error) => console.warn('Geolocation error:', error),
         { enableHighAccuracy: true }
