@@ -6,14 +6,13 @@ A vibrant, mobile-first web application designed to help families in Germany fin
 ## 2. Core Functional Requirements
 *   **Data Source**: Use OpenStreetMap (OSM) via the Overpass API for real-time playground data.
 *   **Geographic Scope**: Optimized for use within Germany.
+*   **Location Discovery**:
+    *   **Automatic Detection**: Real-time high-accuracy GPS detection with a robust fallback for coarse locations.
+    *   **Manual Search**: Integrated search bar for finding locations by city name, street, or landmark (via Nominatim API).
 *   **Navigation & Routing**:
     *   Support **Walking**, **Cycling**, and **Driving** with visual turn-by-turn directions directly on the map.
     *   Support **Public Transport (PT)** via deep-linking to Google Maps (to leverage accurate German transit data).
-    *   Implement **Automatic Rerouting** based on the user's real-time GPS position.
-*   **Playground Details**: Display the following information for each spot:
-    *   Equipment types (Swings, slides, etc.)
-    *   Age suitability and amenities (extracted from OSM tags).
-*   **Community Gallery**: Display community-uploaded photos in a horizontal gallery for each playground.
+*   **Playground Details**: Display equipment types, age suitability, and community-uploaded photos in a horizontal gallery.
 
 ## 3. User Interaction & Community
 *   **Accounts**: User authentication via Supabase (Login/Signup).
@@ -21,17 +20,17 @@ A vibrant, mobile-first web application designed to help families in Germany fin
 *   **Privacy**: Maximize user privacy; ONLY access location data when the application is active and in use.
 
 ## 4. Design & User Experience
-*   **Platform**: Standard "No-Build" Web Page (single HTML file + CSS).
-*   **Aesthetic**: "Premium and Playful" – Vibrant colors, rounded bubbly UI elements, and a high-quality interactive map experience.
+*   **Platform**: Standard "No-Build" Multi-file Web Architecture (HTML, CSS, and separate JS).
+*   **Aesthetic**: "Premium and Playful" – Vibrant colors, glassmorphism, and rounded bubbly UI elements.
 *   **Map Experience**: 
-    *   3D building extrusions for immersive navigation.
-    *   Detailed street names and landmarks in German.
+    *   3D building extrusions for immersive navigation (zoom 15+).
+    *   Detailed street names and labels in German.
     *   45-degree tilted camera for a dynamic perspective.
 *   **Mobile-First**: Optimized for small screens and touch interactions.
 
 ## 5. Technology Stack
 *   **Frontend**: React (18.x) + Vanilla CSS.
-*   **Transpiler**: Babel Standalone (runtime JSX compilation).
+*   **Core Logic**: Separate `app.js` loaded via Babel Standalone.
 *   **Map Engine**: MapLibre GL JS (Vector-based) using OpenFreeMap tiles.
 *   **Backend/Storage**: Supabase (Auth, Storage & Database).
-*   **Routing**: OpenRouteService (Walk/Bike/Car).
+*   **APIs**: OpenRouteService (Routing), Overpass (Discovery), Nominatim (Search).
