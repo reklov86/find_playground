@@ -10,9 +10,9 @@ A vibrant, mobile-first web application designed to help families in Germany fin
     *   **Automatic Detection**: Real-time high-accuracy GPS detection with a robust fallback for coarse locations.
     *   **Manual Search**: Integrated search bar for finding locations by city name, street, or landmark (via Nominatim API).
 *   **Navigation & Routing**:
-    *   Support **Walking**, **Cycling**, and **Driving** with visual turn-by-turn directions directly on the map.
-    *   Support **Public Transport (PT)** via deep-linking to Google Maps (to leverage accurate German transit data).
-*   **Playground Details**: Display equipment types, age suitability, and community-uploaded photos in a horizontal gallery.
+    *   **Multi-Modal Routing**: Integrated support for **Walking**, **Cycling**, and **Driving** with graphical turn-by-turn lines and custom glow effects. [✅ DONE]
+    *   **External Support**: Support **Public Transport (PT)** via deep-linking to Google Maps (to leverage accurate German transit data). [🕒 PENDING]
+*   **Playground Details**: Display equipment types, distance-based sorting, and community-uploaded photos in a mobile-optimized list view. [✅ DONE]
 
 ## 3. User Interaction & Community
 *   **Accounts**: User authentication via Supabase (Login/Signup).

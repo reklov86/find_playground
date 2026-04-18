@@ -9,9 +9,9 @@ A high-performance, mobile-first web application designed to help families in Ge
 - 🗺️ **Interactive 3D Maps**: Explore real playgrounds with 3D building extrusions and a dynamic 45-degree tilted view. [✅ LIVE]
 - 📍 **Functional Search**: Real-time high-accuracy search for cities, streets, and landmarks via Nominatim API. [✅ LIVE]
 - 🔐 **Secure Authentication**: Full user signup and login flow powered by Supabase Auth. [✅ LIVE]
-- 🛝 **Real-time Data**: Playgrounds fetched dynamically from OpenStreetMap via Overpass API. [✅ LIVE]
-- 🚶 **Multimodal Routing**: [🕒 COMING SOON] Integrated walking, cycling, and driving directions.
-- 🚌 **Public Transport**: [🕒 COMING SOON] Deep-links to Google Maps.
+- 🛝 **Real-time Data**: Playgrounds fetched dynamically from OpenStreetMap via Overpass API with multi-endpoint redundancy. [✅ LIVE]
+- 🚶 **Multimodal Routing**: Integrated walking, cycling, and driving directions with graphical route lines. [✅ LIVE]
+- 📋 **List View & Proximity**: Switch between map and list views, with the 10 closest playgrounds automatically sorted. [✅ LIVE]
 - 📸 **Community Photos**: Authenticated users can view details (Upload coming soon). [✅ PARTIAL]
 - 🎨 **Premium UI**: Vibrant colors, glassmorphism, and smooth Framer Motion animations.
 
