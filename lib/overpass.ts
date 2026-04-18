@@ -36,17 +36,17 @@ const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.openstreetmap.fr/api/interpreter',
-  'https://overpass.n.ro.lt/api/interpreter',
-  'https://overpass.osm.ch/api/interpreter',
   'https://main.overpass-api.de/api/interpreter',
   'https://z.overpass-api.de/api/interpreter',
-  'https://overpass.be/api/interpreter'
+  'https://overpass.n.ro.lt/api/interpreter',
+  'https://overpass.osm.ch/api/interpreter'
 ];
 
-const QUERY_TIMEOUT = 90; // Seconds
+const QUERY_TIMEOUT = 15; // Seconds per mirror
 
 /**
  * Generic fetcher for Overpass data with retries.
+ * Uses GET instead of POST to improve CORS compatibility on static sites.
  */
 async function executeOverpassQuery(query: string): Promise<GeoJSONFeatureCollection> {
   let lastError: Error | null = null;
@@ -57,15 +57,17 @@ async function executeOverpassQuery(query: string): Promise<GeoJSONFeatureCollec
     try {
       console.log(`Overpass Attempt ${attempt}: Querying ${endpoint}...`);
       
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: query,
-        // Short timeout per endpoint to fail-fast and try the next one
-        signal: AbortSignal.timeout(15000) 
+      // Use URLSearchParams for clean encoding
+      const url = `${endpoint}?data=${encodeURIComponent(query.trim())}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        // GET requests are typically "simple requests" and better for CORS
+        signal: AbortSignal.timeout(QUERY_TIMEOUT * 1000) 
       });
 
       if (response.status === 429) {
-        console.warn(`Overpass endpoint ${endpoint} rate limited (429).`);
+        console.warn(`Overpass mirror ${endpoint} rate limited (429).`);
         continue;
       }
       
@@ -77,7 +79,7 @@ async function executeOverpassQuery(query: string): Promise<GeoJSONFeatureCollec
       const elements: OSMElement[] = data.elements || [];
 
       if (elements.length === 0) {
-        console.log(`Overpass endpoint ${endpoint} returned 0 elements.`);
+        console.log(`Overpass mirror ${endpoint} returned 0 elements.`);
       } else {
         console.log(`Overpass Success: Found ${elements.length} elements from ${endpoint}`);
       }
@@ -108,13 +110,13 @@ async function executeOverpassQuery(query: string): Promise<GeoJSONFeatureCollec
       return { type: 'FeatureCollection', features };
     } catch (error: any) {
       const errorMsg = error?.name === 'TimeoutError' ? 'Timeout' : error?.message || 'Unknown error';
-      console.error(`Error with Overpass endpoint ${endpoint}: ${errorMsg}`);
+      console.error(`Error with Overpass mirror ${endpoint}: ${errorMsg}`);
       lastError = error as Error;
       continue;
     }
   }
 
-  console.error('All Overpass endpoints failed or were exhausted:', lastError);
+  console.error('All Overpass mirrors failed or were exhausted:', lastError);
   return { type: 'FeatureCollection', features: [] };
 }
 
