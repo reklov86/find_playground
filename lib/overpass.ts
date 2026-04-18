@@ -35,8 +35,13 @@ export interface GeoJSONFeatureCollection {
 const OVERPASS_ENDPOINTS = [
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass-api.de/api/interpreter',
-  'https://overpass.openstreetmap.fr/api/interpreter'
+  'https://overpass.openstreetmap.fr/api/interpreter',
+  'https://overpass.n.ro.lt/api/interpreter',
+  'https://overpass.osm.ch/api/interpreter',
+  'https://main.overpass-api.de/api/interpreter'
 ];
+
+const QUERY_TIMEOUT = 90; // Seconds
 
 /**
  * Generic fetcher for Overpass data with retries.

@@ -48,7 +48,19 @@ This command generates a static version of the site in the `out/` directory.
 
 ## GitHub Pages Deployment
 
-### 1. Manual Deployment (via `gh-pages`)
+### 1. Configure GitHub Secrets (Required for Routing)
+
+Since `.env.local` is not pushed to the repository, you must manually add your API keys to GitHub Secrets to enable routing on the live site:
+
+1.  Go to your GitHub Repository: `reklov86/find_playground`.
+2.  Navigate to **Settings** > **Secrets and variables** > **Actions**.
+3.  Click **New repository secret**.
+4.  Add the following secret:
+    -   **Name**: `NEXT_PUBLIC_ORS_API_KEY`
+    -   **Secret**: (Paste your OpenRouteService API Key here)
+5.  If you use a custom GitHub Action for deployment, ensure it includes this secret in the environment.
+
+### 2. Manual Deployment (via `gh-pages`)
 
 You can use the `gh-pages` package to deploy the contents of the `out/` folder:
 

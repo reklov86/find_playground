@@ -11,8 +11,7 @@ import { GeoJSONFeature } from '@/lib/overpass';
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/bright';
 
 // High-visibility teardrop pin with slide icon
-// Loaded from /public/playground-pin.svg
-const PLAYGROUND_PIN_URL = '/find_playground/playground-pin.svg';
+const PIN_SVG = `<svg width="48" height="60" viewBox="0 0 48 60" xmlns="http://www.w3.org/2000/svg"><path d="M24 0C10.7 0 0 10.7 0 24C0 37.3 24 60 24 60C24 60 48 37.3 48 24C48 10.7 37.3 0 24 0Z" fill="#FACC15" stroke="white" stroke-width="3"/><circle cx="24" cy="24" r="16" fill="white"/><path d="M16 18C16 18 18 22 22 22C26 22 32 34 32 34" stroke="#854D0E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 34V18" stroke="#854D0E" stroke-width="3" stroke-linecap="round"/></svg>`;
 
 export interface MapViewHandle {
   flyTo: (longitude: number, latitude: number, zoom?: number) => void;
@@ -113,14 +112,20 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
       });
     }
 
-    // Add playground pin image from static asset for maximum reliability
-    map.loadImage(PLAYGROUND_PIN_URL).then(({ data }) => {
-      if (data && !map.hasImage('playground-pin')) {
-        map.addImage('playground-pin', data, { sdf: false });
-      }
-    }).catch(error => {
-      console.error('Error loading playground pin from URL:', error);
-    });
+    // Add playground pin image using direct Image loading (more robust than loadImage for SVGs)
+    if (!map.hasImage('playground-pin')) {
+      const img = new Image();
+      img.onload = () => {
+        if (!map.hasImage('playground-pin')) {
+          map.addImage('playground-pin', img, { sdf: false });
+        }
+      };
+      img.onerror = (err) => {
+        console.error('Error rendering playground pin:', err);
+      };
+      // Use clean base64 to avoid any server/URL resolution issues
+      img.src = 'data:image/svg+xml;base64,' + btoa(PIN_SVG);
+    }
 
     updateBbox();
   };

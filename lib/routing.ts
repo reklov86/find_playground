@@ -74,7 +74,15 @@ export async function getRoute(
       return null;
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    // Strict verification of the ORS response structure
+    if (data && data.type === 'FeatureCollection' && data.features?.[0]?.geometry?.type === 'LineString') {
+      return data as RouteData;
+    }
+    
+    console.error('Invalid ORS route format:', data);
+    return null;
   } catch (error) {
     console.error('Failed to fetch route:', error);
     return null;
