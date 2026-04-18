@@ -1,13 +1,44 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import MapView from "@/components/MapView";
-import { Search, MapPin, Navigation, Camera, LogIn } from "lucide-react";
+import AuthModal from "@/components/AuthModal";
+import { Search, MapPin, Navigation, Camera, LogIn, LogOut, User as UserIcon } from "lucide-react";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 export default function Home() {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
+
       {/* Navigation Header */}
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex justify-between items-center bg-white/70 backdrop-blur-xl border-b border-white/20">
         <div className="flex items-center gap-2">
@@ -19,10 +50,38 @@ export default function Home() {
           </span>
         </div>
         
-        <button className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
-          <LogIn className="w-5 h-5" />
-          Anmelden
-        </button>
+        <div className="flex items-center gap-4">
+          {user ? (
+            <div className="flex items-center gap-4">
+              <div className="hidden md:block text-right">
+                <p className="text-sm font-bold text-slate-900 leading-none mb-1">
+                  {user.email?.split('@')[0]}
+                </p>
+                <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                  Entdecker Profil
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 border-2 border-white shadow-md">
+                <UserIcon className="w-5 h-5" />
+              </div>
+              <button 
+                onClick={handleSignOut}
+                className="p-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-all border border-red-100"
+                title="Abmelden"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
+            >
+              <LogIn className="w-5 h-5" />
+              Anmelden
+            </button>
+          )}
+        </div>
       </header>
 
       <main className="flex-1 pt-24 pb-12 px-6 max-w-7xl mx-auto w-full tracking-tight">
