@@ -52,57 +52,65 @@ export async function getRoute(
   profile: RoutingProfile = 'foot-walking'
 ): Promise<RouteData | null> {
   if (!API_KEY) {
-    console.error('OpenRouteService API key is missing.');
+    console.error('OpenRouteService API key is missing. Check NEXT_PUBLIC_ORS_API_KEY environment variable.');
     return null;
   }
+
+  const queryParams = new URLSearchParams({ api_key: API_KEY });
+  const url = `${BASE_URL}/${profile}/geojson?${queryParams.toString()}`;
 
   try {
     const body = {
       coordinates: [start, end],
       instructions: true,
-      language: 'de', // Request instructions in German
-      units: 'm'
+      language: 'de',
+      units: 'm',
+      preference: 'recommended'
     };
 
-    const response = await fetch(`${BASE_URL}/${profile}/geojson`, {
+    console.log(`Fetching route from ORS: ${profile}`, { start, end });
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': API_KEY,
+        'Authorization': API_KEY, // Try both header and query param for maximum compatibility
       },
       body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('ORS Routing Error:', errorData);
-      
-      if (response.status === 401 || response.status === 403) {
-        const fallbackUrl = `${BASE_URL}/${profile}/geojson?api_key=${API_KEY}`;
-        const fallbackResponse = await fetch(fallbackUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        
-        if (fallbackResponse.ok) {
-          return await fallbackResponse.json();
-        }
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        errorData = errorText;
       }
+      console.error('ORS Routing Error Details:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        url: url.replace(API_KEY, 'REDACTED')
+      });
       return null;
     }
 
     const data = await response.json();
     
-    // Strict verification of the ORS response structure
-    if (data && data.type === 'FeatureCollection' && data.features?.[0]?.geometry?.type === 'LineString') {
-      return data as RouteData;
+    // Robust verification
+    if (data && data.type === 'FeatureCollection' && data.features?.length > 0) {
+      const feature = data.features[0];
+      if (feature.geometry?.coordinates?.length > 0 && feature.properties?.segments?.[0]?.steps) {
+        console.log('Successfully fetched route with instructions');
+        return data as RouteData;
+      }
     }
     
-    console.error('Invalid ORS route format:', data);
+    console.error('ORS response missing expected data (geometry or steps):', data);
     return null;
   } catch (error) {
-    console.error('Failed to fetch route:', error);
+    console.error('Failed to fetch route (network or parsing error):', error);
     return null;
   }
 }

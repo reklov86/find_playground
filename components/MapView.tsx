@@ -49,6 +49,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
   const [activeMode, setActiveMode] = useState<RoutingProfile>('foot-walking');
   const [isRouting, setIsRouting] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [routingError, setRoutingError] = useState<string | null>(null);
 
   // If no external data is provided, use own query (fallback)
   const { data: internalPlaygrounds } = usePlaygrounds(bbox, viewState.zoom);
@@ -176,13 +177,16 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
               duration: 2000
             });
           }
+          setRoutingError(null);
+        } else {
+          setRoutingError('Route konnte nicht berechnet werden.');
         }
         setIsRouting(false);
       },
       (error) => {
         console.error('Geolocation error:', error);
+        setRoutingError('Standortzugriff erforderlich.');
         setIsRouting(false);
-        alert('Standortzugriff erforderlich für Navigation.');
       }
     );
   };
@@ -191,6 +195,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
     setRoute(null);
     setSelectedPlayground(null);
     setShowInstructions(false);
+    setRoutingError(null);
   };
 
   return (
@@ -256,7 +261,8 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
           </Source>
         )}
 
-        {route && (
+        {/* Improved Route Layer handling */}
+        {route && route.features?.length > 0 && route.features[0].geometry && (
           <Source type="geojson" data={route}>
             <Layer
               id="route-layer-glow"
@@ -401,30 +407,36 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-            {route.features[0].properties.segments[0].steps.map((step, idx) => (
-              <div 
-                key={idx} 
-                className="group flex gap-3 p-3 rounded-2xl hover:bg-yellow-50/50 transition-colors border border-transparent hover:border-yellow-100"
-              >
-                <div className="mt-0.5 w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-yellow-100 group-hover:text-yellow-600 transition-colors">
-                  <span className="text-[10px] font-black">{idx + 1}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-bold text-slate-700 leading-snug mb-1">
-                    {step.instruction}
-                  </p>
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                    <span>{step.distance >= 1000 ? `${(step.distance/1000).toFixed(1)} km` : `${Math.round(step.distance)} m`}</span>
-                    {step.name && step.name !== '-' && (
-                      <>
-                        <span className="w-1 h-1 rounded-full bg-slate-200" />
-                        <span className="text-slate-500">{step.name}</span>
-                      </>
-                    )}
+            {route?.features?.[0]?.properties?.segments?.[0]?.steps ? (
+              route.features[0].properties.segments[0].steps.map((step, idx) => (
+                <div 
+                  key={idx} 
+                  className="group flex gap-3 p-3 rounded-2xl hover:bg-yellow-50/50 transition-colors border border-transparent hover:border-yellow-100"
+                >
+                  <div className="mt-0.5 w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-yellow-100 group-hover:text-yellow-600 transition-colors">
+                    <span className="text-[10px] font-black">{idx + 1}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-slate-700 leading-snug mb-1">
+                      {step.instruction}
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                      <span>{step.distance >= 1000 ? `${(step.distance/1000).toFixed(1)} km` : `${Math.round(step.distance)} m`}</span>
+                      {step.name && step.name !== '-' && (
+                        <>
+                          <span className="w-1 h-1 rounded-full bg-slate-200" />
+                          <span className="text-slate-500">{step.name}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="p-8 text-center">
+                <p className="text-xs font-bold text-slate-400">Keine detaillierten Anweisungen verfügbar.</p>
               </div>
-            ))}
+            )}
             
             <div className="pt-4 flex items-center justify-center gap-2">
               <div className="w-10 h-1 rounded-full bg-slate-100" />
@@ -457,6 +469,17 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 px-6 py-3 rounded-full bg-slate-900 text-white text-sm font-bold shadow-2xl flex items-center gap-3 border border-slate-700 backdrop-blur-md opacity-90">
           <Info className="w-5 h-5 text-yellow-400" />
           Zoome näher heran, um Spielplätze zu entdecken
+        </div>
+      )}
+
+      {/* Routing Error Toast */}
+      {routingError && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-4 rounded-3xl bg-red-500 text-white text-sm font-bold shadow-2xl flex items-center gap-3 border-2 border-white animate-bounce">
+          <Info className="w-5 h-5 text-white" />
+          {routingError}
+          <button onClick={() => setRoutingError(null)} className="ml-2 hover:opacity-70">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>
