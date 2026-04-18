@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useImperativeHandle, forwardRef, useState, useEffect } from 'react';
-import Map, { NavigationControl, ScaleControl, GeolocateControl, MapRef, Source, Layer, Popup, MapLayerMouseEvent } from 'react-map-gl/maplibre';
+import Map, { NavigationControl, ScaleControl, GeolocateControl, MapRef, Source, Layer, Popup, MapLayerMouseEvent, Marker } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { usePlaygrounds } from '@/hooks/usePlaygrounds';
 import { Navigation, Info, Bike, Car, Footprints, X, Clock, MapPin, ChevronRight, List, Map as MapIcon } from 'lucide-react';
@@ -29,9 +29,10 @@ interface MapViewProps {
   playgrounds?: GeoJSONFeature[];
   onBboxChange?: (bbox: [number, number, number, number]) => void;
   onViewStateChange?: (viewState: any) => void;
+  userLocation?: { lat: number; lon: number } | null;
 }
 
-const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, playgrounds: externalPlaygrounds, onBboxChange, onViewStateChange }, ref) => {
+const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, playgrounds: externalPlaygrounds, onBboxChange, onViewStateChange, userLocation }, ref) => {
   const mapRef = useRef<MapRef>(null);
   const [viewState, setViewState] = useState({
     longitude: 10.4515, // Center of Germany
@@ -215,6 +216,20 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({ initialViewState, pla
         />
         <NavigationControl position="top-right" />
         <ScaleControl position="bottom-right" />
+        
+        {/* User Location Blue Pulse Dot */}
+        {userLocation && (
+          <Marker 
+            longitude={userLocation.lon} 
+            latitude={userLocation.lat} 
+            anchor="center"
+          >
+            <div className="relative flex items-center justify-center">
+              <div className="absolute w-8 h-8 bg-blue-500/30 rounded-full animate-ping" />
+              <div className="relative w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg shadow-blue-200" />
+            </div>
+          </Marker>
+        )}
 
         {playgrounds && playgrounds.length > 0 && (
           <Source type="geojson" data={{ type: 'FeatureCollection', features: playgrounds }}>

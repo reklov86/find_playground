@@ -285,6 +285,7 @@ export default function Home() {
               <MapView 
                 ref={mapRef} 
                 playgrounds={playgrounds}
+                userLocation={userLocation}
                 initialViewState={{
                   longitude: mapCenter.lon,
                   latitude: mapCenter.lat,
